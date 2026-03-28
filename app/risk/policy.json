@@ -1,0 +1,24 @@
+{
+  "policy_version": "1.0",
+  "global_settings": {
+    "default_risk_score": 0,
+    "max_risk_score": 100
+  },
+  "severity_levels": [
+    { "min": 0, "max": 30, "label": "low" },
+    { "min": 31, "max": 70, "label": "medium" },
+    { "min": 71, "max": 100, "label": "high" }
+  ],
+  "rules": [
+    {
+      "rule_id": "HIGH_VALUE_TRANSACTION",
+      "enabled": true,
+      "description": "High value transaction detected",
+      "conditions": {
+        "event_type": "transaction",
+        "amount_gt": 100000
+      },
+      "risk_score": 70
+    }
+  ]
+}
