@@ -12,7 +12,7 @@ def detect_ato(event, context):
     failed_attempts = [e for e in recent if e[0] == "login_failed"]
 
     if len(failed_attempts) >= 5:
-        context.ato_flag[user] = True
+        context.ato_flag[user] = current_time
 
         return {
             "type": "ATO",

@@ -2,6 +2,7 @@ from app.detection.rules.ato import detect_ato
 from app.detection.rules.fraud import detect_fraud
 from app.detection.rules.geo import detect_geo
 from app.detection.rules.sequence import detect_sequence
+from datetime import datetime
 
 
 RULES = [
@@ -16,6 +17,11 @@ class DetectionEngine:
     def __init__(self, context):
         self.context = context
 
+    def _parse_time(self, ts):
+        if isinstance(ts, str):
+            return datetime.fromisoformat(ts)
+        return ts
+
     def run(self, event):
         alerts = []
 
@@ -24,15 +30,18 @@ class DetectionEngine:
             if result:
                 alerts.append(result)
 
-        # 🔥 Cross-event escalation (correct version)
         user = event.get("user_id")
-        current_time = event.get("timestamp")
+        current_time = self._parse_time(event.get("timestamp"))
 
         last_ato = self.context.ato_flag.get(user)
 
+        # ✅ Ensure last_ato is datetime
+        if isinstance(last_ato, str):
+            last_ato = datetime.fromisoformat(last_ato)
+
         if (
             user
-            and last_ato
+            and isinstance(last_ato, datetime)
             and current_time
             and (current_time - last_ato).seconds <= 600
             and event.get("event_type") == "transaction"
@@ -45,6 +54,7 @@ class DetectionEngine:
                 "mitre": "T1078"
             })
 
+        # ✅ Dedup
         seen = set()
         unique_alerts = []
 

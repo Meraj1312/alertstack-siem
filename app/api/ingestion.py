@@ -54,3 +54,8 @@ def ingest_event(event: RawEvent):
         "correlation": correlated_event.get("correlation", None),
         "detection": correlated_event["detection"]
     }
+
+@router.get("/events/flat")
+def get_events_flat():
+    data = get_all_events()
+    return data["events"]

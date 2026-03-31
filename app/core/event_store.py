@@ -1,23 +1,66 @@
 from typing import List, Dict, Optional
 from datetime import datetime
+import json
 
-EVENTS: List[Dict] = []
-EVENT_IDS = set()
+from app.db.database import get_connection
 
 
+# ➕ Add event to DB
 def add_event(event: Dict) -> bool:
-    if event["event_id"] in EVENT_IDS:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO events (
+                id, timestamp, user_id, event_type, severity,
+                raw_data, normalized_data, risk_data,
+                correlation_data, detection_data
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            event["event_id"],
+            event["timestamp"],
+            event.get("user_id"),
+            event.get("event_type"),
+            event.get("risk", {}).get("severity", "low"),
+
+            json.dumps(event.get("raw", {})),
+            json.dumps(event.get("normalized", {})),
+            json.dumps(event.get("risk", {})),
+            json.dumps(event.get("correlation", {})),
+            json.dumps(event.get("detection", {})),
+        ))
+
+        conn.commit()
+        return True
+
+    except Exception as e:
+        print("DB Insert Error:", e)
         return False
 
-    EVENTS.append(event)
-    EVENT_IDS.add(event["event_id"])
-    return True
+    finally:
+        conn.close()
 
 
+# 📥 Get all events
 def get_all_events() -> List[Dict]:
-    return EVENTS
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, timestamp, user_id, event_type, severity
+        FROM events
+        ORDER BY timestamp DESC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
 
 
+# 🔍 Query events
 def query_events(
     user_id: Optional[str] = None,
     event_type: Optional[str] = None,
@@ -25,32 +68,42 @@ def query_events(
     start_time: Optional[datetime] = None,
     end_time: Optional[datetime] = None,
 ):
-    results = EVENTS.copy()
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    if start_time:
-        results = [
-            e for e in results
-            if datetime.fromisoformat(e["timestamp"]) >= start_time
-        ]
+    query = """
+        SELECT id, timestamp, user_id, event_type, severity
+        FROM events
+        WHERE 1=1
+    """
 
-    if end_time:
-        results = [
-            e for e in results
-            if datetime.fromisoformat(e["timestamp"]) <= end_time
-        ]
+    params = []
 
     if user_id:
-        results = [e for e in results if e.get("user_id") == user_id]
+        query += " AND user_id = ?"
+        params.append(user_id)
 
     if event_type:
-        results = [e for e in results if e.get("event_type") == event_type]
+        query += " AND event_type = ?"
+        params.append(event_type)
 
     if severity:
-        results = [
-            e for e in results
-            if e.get("risk", {}).get("severity") == severity
-        ]
+        query += " AND severity = ?"
+        params.append(severity)
 
-    results.sort(key=lambda x: x["timestamp"], reverse=True)
+    if start_time:
+        query += " AND timestamp >= ?"
+        params.append(start_time.isoformat())
 
-    return results
+    if end_time:
+        query += " AND timestamp <= ?"
+        params.append(end_time.isoformat())
+
+    query += " ORDER BY timestamp DESC"
+
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return [dict(row) for row in rows]

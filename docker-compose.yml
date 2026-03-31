@@ -3,7 +3,25 @@ version: "3.9"
 services:
   alertstack:
     build: .
+    container_name: alertstack-backend
     ports:
       - "8000:8000"
     volumes:
       - ./data:/app/data
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: alertstack-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+      - grafana-storage:/var/lib/grafana
+    environment:
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=frser-sqlite-datasource
+      - GF_INSTALL_PLUGINS=frser-sqlite-datasource
+    restart: unless-stopped
+
+volumes:
+  grafana-storage:

@@ -12,7 +12,7 @@ class Settings:
     # DATABASE
     # ----------------------------
     BASE_DIR = Path(__file__).resolve().parent.parent.parent
-    DB_PATH: Path = Path(os.getenv("DB_PATH", BASE_DIR / "alertstack.db"))
+    DB_PATH: Path = Path(os.getenv("DB_PATH", BASE_DIR / "data/alertstack.db"))
 
     # ----------------------------
     # RISK ENGINE
