@@ -6,6 +6,8 @@ It processes events through a full detection lifecycle and exposes APIs for **SO
 
 ---
 
+### Video Demonstration of the project - https://youtu.be/6HgafyO9dTg
+
 ##  Project Goal
 
 To build a **practical, detection-focused SIEM system** that demonstrates:
