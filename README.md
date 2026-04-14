@@ -1,4 +1,4 @@
-#  AlertStack — FinTech Mini-SIEM (SOC-Focused)
+#  AlertStack — FinTech Mini-SIEM
 
 AlertStack is a **Security Information and Event Management (SIEM) backend system** designed to simulate real-world **FinTech threat detection pipelines**.
 
